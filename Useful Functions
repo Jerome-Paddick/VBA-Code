@@ -15,7 +15,110 @@ Private Sub Worksheet_Change(ByVal Target As Range)
         
     Application.ScreenUpdating = False
 End Sub
+Sub ICSR_Tracker_Fix()
+'creates variables
+    Dim PATH As String
+    Dim NEWNAME As String
+    Dim NEWYEAR As String
 
+' //////////////////////////////////////////////
+
+' PATH sets save location of new tracker
+PATH = "C:\Users\jpaddick\Desktop\ICSR Copies\2018s"
+
+' NEWNAME sets new name of Sheet
+NEWNAME = "ISCR Tracker 2018"
+
+' NEWYEAR sets Year to apply to filename
+NEWYEAR = "2018"
+
+' ///////////////////////////////////////////////
+
+'unshares
+    If ActiveWorkbook.MultiUserEditing Then
+        ActiveWorkbook.ExclusiveAccess
+    End If
+    
+'clears all rows past 3 without formulas and all columns up to end of table
+    Dim Rowcnt As Integer
+    Rowcnt = ActiveSheet.Rows.Count
+    Dim Colcnt As Integer
+    Colcnt = ActiveSheet.Columns.Count
+    Dim rConstants As Range
+    On Error Resume Next
+    Set rConstants = ActiveSheet.Rows(3 & ":" & ActiveSheet.Rows.Count).SpecialCells(xlCellTypeConstants)
+    rConstants.ClearContents
+    
+'unlocks
+    ActiveSheet.Unprotect Password:="ICSR!"
+
+
+
+'remove table drop down selections
+    On Error Resume Next
+    ActiveSheet.ShowAllData
+    
+'shows all columns
+    ActiveSheet.Cells.EntireColumn.Hidden = False
+      
+'removes column with header "Report Date"
+    Dim i As Long, MaxColumns As Long
+    Dim WrongHeaderName As String
+    MaxColumns = ActiveSheet.UsedRange.Columns.Count
+    WrongHeaderName = "Report Date"
+    For i = MaxColumns To 1 Step -1
+        If ActiveSheet.Cells(1, i).Value = WrongHeaderName Then ActiveSheet.Cells(1, i).EntireColumn.Delete xlshiftleft
+    Next i
+    
+' change sheet name
+    ActiveSheet.Name = NEWNAME
+    
+' protect sheet & allow filtering
+    With ActiveSheet
+        .Protect Password:="ICSR!", AllowFiltering:=True
+        .EnableSelection = xlUnlockedCells
+    End With
+    
+'create new sheet name
+    Dim Getbook As String
+    Getbook = ActiveCell.Parent.Parent.Name
+    Getbook = Replace(Getbook, "2017", NEWYEAR)
+    Getbook = Replace(Getbook, "New", "")
+    
+'save new sheet name in new location & share doc
+    Application.DisplayAlerts = False
+    ActiveWorkbook.SaveAs Filename:=PATH & "\" & Getbook, _
+     AccessMode:=xlShared, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+    Application.DisplayAlerts = True
+
+
+End Sub
+
+Sub Convert_Listing()
+
+LAST = Cells(Rows.Count, "A").End(xlUp).Row
+For x = 2 To LAST
+'Change Status Bar
+Application.StatusBar = x
+
+    If Cells(x, "C") = "Closed" And Cells(x, "E") = "No" Then
+        P = 1
+        While Cells(x, "A") = Cells(x + P, "A")
+            If Len(Cells(x + P, "C")) = 0 And Cells(x + P, "E") = "Yes" Then
+                Cells(x, "D").Interior.ColorIndex = 43
+                Cells(x + P, "D").Interior.ColorIndex = 46
+                asdf = Cells(x, "D")
+                Cells(x, "D") = Cells(x + P, "D")
+                Cells(x + P, "D") = asdf
+                Cells(x + P, "E") = "No"
+                Cells(x, "E") = "Yes"
+            End If
+            P = P + 1
+        Wend
+    End If
+Next x
+
+End Sub
 Sub compare_2_COLS()
 
 ColA = "F"
@@ -186,31 +289,5 @@ Range("R:S").columnWidth = 6
 Range("X:Y").columnWidth = 6
 Columns("P:Q").Select
 Selection.EntireColumn.Hidden = True
-
-End Sub
-
-Sub ConvertDatabase()
-
-LAST = Cells(Rows.Count, "A").End(xlUp).Row
-For x = 2 To LAST
-'Change Status Bar
-Application.StatusBar = x
-
-    If Cells(x, "C") = "Closed" And Cells(x, "E") = "No" Then
-        P = 1
-        While Cells(x, "A") = Cells(x + P, "A")
-            If Len(Cells(x + P, "C")) = 0 And Cells(x + P, "E") = "Yes" Then
-                Cells(x, "D").Interior.ColorIndex = 43
-                Cells(x + P, "D").Interior.ColorIndex = 46
-                asdf = Cells(x, "D")
-                Cells(x, "D") = Cells(x + P, "D")
-                Cells(x + P, "D") = asdf
-                Cells(x + P, "E") = "No"
-                Cells(x, "E") = "Yes"
-            End If
-            P = P + 1
-        Wend
-    End If
-Next x
 
 End Sub
