@@ -106,3 +106,20 @@ Private Sub Worksheet_Change(ByVal Target As Range)
     Application.ScreenUpdating = False
 End Sub
 
+'backspace
+If KeyCode = 8 And TextBox1 = "Please Enter Password..." Then
+    TextBox1 = ""
+    KeyCode.Value = 0
+End If
+
+'esc
+If KeyCode = 27 Then
+    Unload Me
+    KeyCode.Value = 0
+End If
+
+'enter
+If KeyCode = 13 Then
+     CommandButton1_Click
+     KeyCode.Value = 0
+End If
