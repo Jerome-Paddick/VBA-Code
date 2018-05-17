@@ -1,0 +1,216 @@
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim KeyCells As Range
+
+    ' The variable KeyCells contains the cells that will
+    ' cause an alert when they are changed.
+    Set KeyCells = Range("A21:B321")
+    
+    If Not Application.Intersect(KeyCells, Range(Target.Address)) _
+           Is Nothing Then
+
+        ' Display a message when one of the designated cells has been
+        ' changed.
+        ' Place your code here.
+        ' MsgBox "Cell " & Target.Address & " has changed."
+        
+    Application.ScreenUpdating = False
+End Sub
+
+Sub compare_2_COLS()
+
+ColA = "F"
+ColB = "G"
+startRow = 2
+
+LRA = Cells(Rows.Count, ColA).End(xlUp).Row
+LRB = Cells(Rows.Count, ColB).End(xlUp).Row
+
+For a = startRow To LRA
+Application.StatusBar = Format(100 * (a / LRA), "###.#") & "%"
+    For b = startRow To LRB
+        If Cells(b, ColB) = Cells(a, ColA) Then
+        Cells(b, ColB).Interior.ColorIndex = 43
+        Cells(a, ColA).Interior.ColorIndex = 43
+        Exit For
+        End If
+    Next b
+Next a
+
+End Sub
+
+Sub pretty_colours()
+
+For x = 1 To 50
+Cells(x, "E").Interior.ColorIndex = x
+Cells(x, "E") = x
+Next x
+
+End Sub
+
+Sub ProgressStatus()
+
+Dim x               As Integer
+Dim MyTimer         As Double
+
+'Change this loop as needed.
+For x = 1 To 50
+    ' Do stuff
+    Application.StatusBar = "Progress: " & x & " of 50: " & Format(x / 50, "0%")
+Next x
+
+Application.StatusBar = False
+
+End Sub
+
+Sub CleanTheTable()
+    Application.ScreenUpdating = False
+    Sheets("Data").Select
+    ActiveSheet.ListObjects("TestTable").HeaderRowRange.Select
+    'Remove the filters if one exists.
+    If ActiveSheet.FilterMode Then
+    Selection.AutoFilter
+    End If
+    'Clear all lines but the first one in the table leaving formulas for the next go round.
+    With Worksheets("Data").ListObjects("TestTable")
+    .Range.AutoFilter
+    On Error Resume Next
+    .DataBodyRange.Offset(1).Resize(.DataBodyRange.Rows.Count - 1, .DataBodyRange.Columns.Count).Rows.Delete
+    .DataBodyRange.Rows(1).SpecialCells(xlCellTypeConstants).ClearContents
+    ActiveWindow.SmallScroll Down:=-10000
+
+    End With
+Application.ScreenUpdating = True
+End Sub
+
+Sub Unhide()
+
+Worksheets("ICSR Tracker 2017").Activate
+ActiveSheet.Unprotect Password:="ICSR!"
+
+Columns("CK:ES").Select
+Selection.EntireColumn.Hidden = False
+
+ActiveSheet.Name = "ICSR Tracker 2018"
+
+ActiveSheet.Protect Password:="ICSR!"
+    
+End Sub
+
+Sub removeref()
+
+Worksheets("Timesheet").Activate
+ActiveSheet.Unprotect Password:="Barney"
+
+Range("AI2:AI36").Replace What:="#REF!", _
+Replacement:="", _
+LookAt:=xlPart, _
+SearchOrder:=xlByColumns, _
+MatchCase:=False, _
+SearchFormat:=False, _
+ReplaceFormat:=False
+    
+ActiveSheet.Protect Password:="Barney"
+    
+End Sub
+
+
+
+Sub CycleThrough()
+ Dim Counter As Integer
+ For Counter = 1 To 20
+ Worksheets("Sheet1").Cells(Counter, 3).Value = Counter
+ Next Counter
+End Sub
+
+Sub Five_Percent()
+
+Dim RanD As Long
+Dim Rowcounting As Integer
+Rowconting = ActiveSheet.ListObjects(1).ListRows.Count
+
+With Worksheets("QA Check").ListObjects(1)
+    .Range.AutoFilter
+    On Error Resume Next
+    .DataBodyRange.Offset(1).Resize(.DataBodyRange.Rows.Count - 1, .DataBodyRange.Columns.Count).Rows.Delete
+    .DataBodyRange.Rows(1).SpecialCells(xlCellTypeConstants).ClearContents
+    ActiveWindow.SmallScroll Down:=-10000
+End With
+
+Tryagain:
+
+For x = 2 To Rowconting
+    RanD = (20 * Rnd)
+    If RanD >= 19 Then
+    Set newrow = Worksheets("QA Check").ListObjects(1).ListRows.Add
+    With newrow
+     .Range(1) = ActiveSheet.Cells(x, 1)
+    End With
+    End If
+Next x
+
+If Worksheets("QA Check").ListObjects(1).ListRows.Count = 1 Then GoTo Tryagain
+
+Worksheets("QA Check").Select
+
+End Sub
+
+Sub make_timesheets()
+
+For x = 2 To 36
+
+Worksheets("Template").Copy After:=Sheets(Sheets.Count)
+ActiveSheet.Name = Worksheets("India Staff").Cells(x, 4)
+Cells(1, 1) = Worksheets("India Staff").Cells(x, 2) & " " & Worksheets("India Staff").Cells(x, 1)
+
+Next x
+
+End Sub
+
+
+
+Sub removeref122()
+
+Range("AH2:AH36").Replace What:="#REF!", _
+Replacement:="", _
+LookAt:=xlPart, _
+SearchOrder:=xlByColumns, _
+MatchCase:=False, _
+SearchFormat:=False, _
+ReplaceFormat:=False
+
+Range("N:AG").columnWidth = 7
+Range("T:V").columnWidth = 8
+Columns("AA").columnWidth = 8
+Columns("AB").columnWidth = 6
+Range("R:S").columnWidth = 6
+Range("X:Y").columnWidth = 6
+Columns("P:Q").Select
+Selection.EntireColumn.Hidden = True
+
+End Sub
+
+Sub ConvertDatabase()
+
+LAST = Cells(Rows.Count, "A").End(xlUp).Row
+For x = 2 To LAST
+'Change Status Bar
+Application.StatusBar = x
+
+    If Cells(x, "C") = "Closed" And Cells(x, "E") = "No" Then
+        P = 1
+        While Cells(x, "A") = Cells(x + P, "A")
+            If Len(Cells(x + P, "C")) = 0 And Cells(x + P, "E") = "Yes" Then
+                Cells(x, "D").Interior.ColorIndex = 43
+                Cells(x + P, "D").Interior.ColorIndex = 46
+                asdf = Cells(x, "D")
+                Cells(x, "D") = Cells(x + P, "D")
+                Cells(x + P, "D") = asdf
+                Cells(x + P, "E") = "No"
+                Cells(x, "E") = "Yes"
+            End If
+            P = P + 1
+        Wend
+    End If
+Next x
+
+End Sub
