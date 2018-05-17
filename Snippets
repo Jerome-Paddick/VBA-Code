@@ -1,0 +1,108 @@
+Sub Generally_Useful_Functions()
+
+'Last Row
+LR = Cells(Rows.Count, "A").End(xlUp).Row
+For x = 2 To LR
+
+Next x
+
+' Advanced Filter
+Range("G:H").AdvancedFilter _
+Action:=xlFilterCopy, _
+CriteriaRange:=Range("W1:X2"), _
+CopyToRange:=Range("Y1"), _
+Unique:=True
+
+'Stop other Macros from Running
+Application.EnableEvents = False
+
+'Change Status Bar
+Application.StatusBar = Format(100 * (x / LR), "###.#") & "%"
+
+'Send Keys
+Application.SendKeys ("{ESC}")
+
+'AUTOFILTER
+ActiveSheet.AutoFilterMode = False
+Range(Cells(1, 1), Cells(LR, 2)).AutoFilter
+
+'ALLIGNMENT
+Columns("A:W").HorizontalAlignment = xlCenter
+
+'Borders
+Range("A1:R780").Borders.LineStyle = xlContinuous
+
+Dim WS As Worksheet
+Set WS = ActiveSheet
+Dim tbl As ListObject
+Set tbl = WS.ListObjects("String")
+
+Set newrow = tbl.ListRows.Add
+With newrow
+    .Range(1) = ("= INDIRECT(Address(Row() - 1, Column())) + 1")
+    .Range(2) = "string"
+End With
+
+'trim empty/null text
+Trim(TextBox1.Value & vbNullString) = vbNullString
+
+ActiveSheet.Unprotect Password:="string"
+ActiveSheet.Protect Password:="string"
+
+Range("AI2:AI36").Replace What:="string", _
+Replacement:="", _
+LookAt:=xlPart, _
+SearchOrder:=xlByColumns, _
+MatchCase:=False, _
+SearchFormat:=False, _
+ReplaceFormat:=False
+
+x = InStr(1, Range, "string")
+
+For Each C In Range("A8:A200")
+For Counter = x To y
+If (Cells(x, 1)) = ("") Then Exit For
+If C.Interior.ColorIndex = -4142 And Not x = 1 Then
+End If
+Next x
+
+Worksheets("sheet1").Len (Cells(1, "a"))
+
+Dim Rowcounting As Integer
+Rowcounting = Worksheets("Listing").ListObjects("Listing").ListRows.Count
+
+Sheets("Sheet2").Visible = xlVeryHidden
+
+Dim ThePW As String
+ThePW = InputBox("A password is required to run this procedure." & vbCrLf & _
+"Please enter the password:", "Password")
+If ThePW <> "Password" Then Exit Sub
+'Rest of your code
+
+On Error Resume Next
+'On Error GoTo String
+'String:
+
+
+    Application.EnableEvents = True
+    
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    Dim KeyCells As Range
+
+    ' The variable KeyCells contains the cells that will
+    ' cause an alert when they are changed.
+    Set KeyCells = Range("A21:B321")
+    
+    If Not Application.Intersect(KeyCells, Range(Target.Address)) _
+           Is Nothing Then
+
+        ' Display a message when one of the designated cells has been
+        ' changed.
+        ' Place your code here.
+        ' MsgBox "Cell " & Target.Address & " has changed."
+        
+    Application.ScreenUpdating = False
+End Sub
+
