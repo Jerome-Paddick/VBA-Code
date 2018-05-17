@@ -1,0 +1,722 @@
+Sub PasswordBox()
+
+UserForm1.Show
+
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+
+' This VBA code creates a textbox with autocomplete functionality whenever the user click on a cell with "List"
+' Data Validation (type 3) and autocompletes any entry in that list,
+' CHANGE INSTRUCITONS:
+' Go to the developer tab and select "design mode", meaning the box will not replace the cell when you click on it
+' and you can freely change the data validation etc.
+
+Dim str As String
+Set ws = ActiveSheet
+Set COMBO = ws.OLEObjects("CBO")
+
+With COMBO
+    'Clear and Hide sBox
+    .ListFillRange = ""
+    .LinkedCell = ""
+    .Visible = False
+End With
+
+On Error GoTo FIN
+
+' If Target Cell Type is a drop down list (type 3)
+
+If Target.Validation.Type = 3 Then
+Target.Cells = ""
+str = Target.Validation.Formula1
+str = Right(str, Len(str) - 1)
+    With COMBO
+      'show the combobox with the list
+      .Visible = True
+      .Left = Target.Left
+      .Top = Target.Top
+      
+      
+'Combobox size is the same as target cell
+'We can change it though
+    .Width = Target.Width
+    .Height = Target.Height
+    'Listfillrange changed to string variable, combobox will show items from that named range
+    .ListFillRange = str
+    .LinkedCell = Target.Address
+    
+    'Activate our box
+    CBO.Activate
+    Me.CBO.DropDown
+    End With
+    
+End If
+
+
+
+FIN:
+End Sub
+
+
+ Sub CBO_LostFocus()
+'When focus cell is lost
+On Error Resume Next
+  With Me.CBO
+    .Top = 10
+    .Left = 10
+    .Width = 0
+    .ListFillRange = ""
+    .LinkedCell = ""
+    .Visible = False
+    .Value = ""
+  End With
+End Sub
+
+Private Sub CBO_KeyDown(ByVal _
+     KeyCode As MSForms.ReturnInteger, _
+     ByVal Shift As Integer)
+  Select Case KeyCode
+    Case 9 'Tab
+      ActiveCell.Offset(0, 1).Activate
+    Case 13 'Enter
+      ActiveCell.Offset(0, 1).Activate
+    Case Else
+        'do nothing
+  End Select
+End Sub
+
+Sub BECOMENOONE()
+'Remove Person
+'validation
+Answer = MsgBox("Are you Sure you want to Delete the person from selected sheets?", vbQuestion + vbYesNo, "???")
+    If Answer = vbNo Then
+        Exit Sub
+    End If
+
+' Worksheets("Data Entry").Activate
+
+Dim NOM, NOM_REAL, DatD, SHT As String
+Dim Dmon, Nic_Row, MAX, Beg, Nom_Ref As Integer
+
+'If Name Empty
+If Cells(22, "C") = "" Then
+    MsgBox ("Please Enter a Name")
+    Exit Sub
+Else: NOM = Cells(22, "C")
+'If Start Date Empty
+End If
+
+'find formatted name
+For x = 41 To (40 + ActiveSheet.ListObjects("NameList").ListRows.Count)
+    If Cells(x, "B") = NOM Then
+    NOM_REAL = Cells(x, "C")
+    Nom_Ref = x
+    Exit For
+    End If
+Next x
+
+' in no end date then all months
+If Cells(22, "D") = "" Then
+Dmon = 42
+GoTo Skip
+Else
+DatD = Cells(22, "D")
+End If
+
+For x = 40 To 54
+    If DateSerial(Year(Cells(x, "D")), Month(Cells(x, "D")), 1) = DateSerial(Year(DatD), Month(DatD), 1) Then
+    Dmon = x
+    Exit For
+    End If
+Next x
+
+Skip:
+
+For Y = (Dmon + 1) To 54
+        SHT = Cells(Y, "E")
+        For Z = 1 To Worksheets(SHT).ListObjects(1).ListRows.Count
+            If NOM_REAL = Worksheets(SHT).Cells(Z + 2, "A") Then
+                Worksheets(SHT).ListObjects(1).ListRows(Z).Delete
+                Exit For
+            End If
+        Next Z
+Next Y
+
+
+If Dmon > 39 Then
+    SHT = Worksheets("Data Entry").Cells(Dmon, "E")
+    var_month = Month(SHT)
+    var_year = Year(SHT)
+    next_month = DateSerial(var_year, var_month + 1, 1)
+    MAX = Worksheets(SHT).ListObjects(1).ListRows.Count
+    ' MsgBox ("Var_Month " & Var_Month & "Var_Year " & Var_Year & " next_month " & next_month)
+    ' MsgBox ("nmon " & next_month - 1)
+    
+    For K = 1 To MAX
+        If NOM_REAL = Worksheets(SHT).Cells(K + 2, "A") Then
+            RRow = K
+            Exit For
+        End If
+    Next K
+    If Worksheets("Data Entry").Cells(22, "D") <> "" Then
+        Beg = Day(Worksheets("Data Entry").Cells(22, "D"))
+        Else
+        Beg = 1
+    End If
+    
+        For P = Beg To (next_month + 1) - DateSerial(var_year, var_month, 1)
+            Worksheets(SHT).Cells(RRow + 2, P + 2).Interior.ColorIndex = 1
+        Next P
+    Worksheets(SHT).Activate
+
+End If
+
+Sheets("Data Entry").ListObjects("NameList").ListRows(Nom_Ref - 40).Range().Delete
+
+End Sub
+
+Sub Add_New_Starter()
+
+'"""""""""""""""""""""""""""""""""""""""""""
+Dim LOCATION As String
+'CHANGE THIS
+LOCATION = Sheets("Data Entry").Cells(1, 1)
+FILENAME = Sheets("Data Entry").Cells(2, 1)
+'""""""""""""""""""""""""""""""""""""""""""
+
+'On Error GoTo Errorcatch
+
+Answer = MsgBox("Are you Sure you want to add a New Starter to selected sheets?", vbQuestion + vbYesNo, "???")
+    If Answer = vbNo Then
+        Exit Sub
+    End If
+
+Dim FirN, SecN, U_I, SDat, SMON, Rowtemp, Team_T As String
+Dim UI_C, var_month, var_year, Team_C, Team As Integer
+
+
+Worksheets("Data Entry").Activate
+
+If Cells(13, "B") = "" Then
+    MsgBox ("Please Enter a First Name")
+    Exit Sub
+Else
+    FirN = Cells(13, "B")
+End If
+If Cells(13, "C") = "" Then
+    MsgBox ("Please Enter a Surname")
+    Exit Sub
+Else
+    SecN = Cells(13, "C")
+End If
+
+
+If Cells(13, "D") = "UK" Or Cells(13, "D") = "India" Then
+    'MsgBox (Cells(13, "D") & " selected")
+    U_I = Cells(13, "D")
+Else
+    MsgBox ("Please Enter UK or India")
+    Exit Sub
+End If
+
+Set newrow = ActiveSheet.ListObjects("NameList").ListRows.Add
+With newrow
+    .Range(1) = SecN & ", " & Left(FirN, 1)
+    .Range(2) = (FirN & " " & SecN)
+    .Range(3) = UCase(SecN) & ", " & FirN
+End With
+
+If U_I = "UK" Then
+'MsgBox ("UK")
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "C").Interior.ColorIndex = 20
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "B").Interior.ColorIndex = 20
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "A").Interior.ColorIndex = 20
+UI_C = 20
+ElseIf U_I = "India" Then
+'MsgBox ("India")
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "A").Interior.ColorIndex = 19
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "B").Interior.ColorIndex = 19
+Cells(40 + ActiveSheet.ListObjects("NameList").ListRows.Count, "C").Interior.ColorIndex = 19
+UI_C = 19
+End If
+
+If Cells(13, "E") = "" Then
+    If U_I = "UK" Then
+    SDat = "01/04/18"
+    ElseIf U_I = "India" Then
+    SDat = "01/01/18"
+    End If
+Else
+    SDat = Cells(13, "E")
+End If
+
+'MsgBox ("after UI")
+'MsgBox DateSerial(Year(Cells(41, "D")), Month(Cells(14, "D")), 1)
+'MsgBox (DateSerial(Year(SDat), Month(SDat), 1))
+
+For x = 40 To 54
+    If DateSerial(Year(Cells(x, "D")), Month(Cells(x, "D")), 1) = DateSerial(Year(SDat), Month(SDat), 1) Then
+    SMON = x
+    Exit For
+    End If
+Next x
+
+'MsgBox ("after SMON " & SMON)
+
+Team = 0
+
+If Worksheets("Data Entry").Cells(13, "F") <> "" Then
+    For T = 18 To 25
+        If Worksheets("Data Entry").Cells(13, "F") = Cells(T, "I") Then
+        Team = T
+        Team_T = Worksheets("Data Entry").Cells(T, "I")
+        Team_C = Worksheets("Data Entry").Cells(T, "I").Interior.ColorIndex
+        Exit For
+        End If
+    Next T
+End If
+    
+'MsgBox ("after team" & Team_T & Team_C)
+
+' run through sheets and add row to each
+
+For Y = SMON To 54
+        SHT = Worksheets("Data Entry").Cells(Y, "E")
+        'MsgBox (SHT)
+        Worksheets(SHT).ListObjects(1).ListRows.Add.Range(1) = UCase(SecN) & ", " & FirN
+        Rowtemp = Worksheets(SHT).ListObjects(1).ListRows.Count
+    'sort by color
+        Worksheets(SHT).Cells((2 + Rowtemp), "A").Interior.ColorIndex = UI_C
+    
+    
+        'MsgBox ("color change")
+        If Team > 0 Then
+        Worksheets(SHT).Cells((2 + Rowtemp), "B") = Worksheets("Data Entry").Cells(Team, "I")
+        'MsgBox ("teamT")
+        Worksheets(SHT).Cells((2 + Rowtemp), "B").Interior.ColorIndex = Team_C
+        'MsgBox ("teamC")
+        End If
+Next Y
+
+If Worksheets("Data Entry").Cells(13, "E") <> "" And Day(Worksheets("Data Entry").Cells(13, "E")) > 1 Then
+    SHT = Cells(SMON, "E")
+    var_month = Month(SHT)
+    var_year = Year(SHT)
+    next_month = DateSerial(var_year, var_month + 1, 1)
+    
+        For v = 1 To (Day(Cells(13, "E")) - 1)
+            If Weekday(DateSerial(var_year, var_month, v)) = 1 Or Weekday(DateSerial(var_year, var_month, v)) = 7 Or Worksheets(SHT).Cells(Rowtemp + 2, v + 2).Interior.ColorIndex = 8 Then
+            Else
+            Worksheets(SHT).Cells(Rowtemp + 2, v + 2).Interior.ColorIndex = 1
+        End If
+        Next v
+    Worksheets(SHT).Activate
+End If
+
+
+
+'**************************Timesheet start*****************************************
+
+If IsWorkBookOpen(LOCATION) = 0 Then
+Workbooks.Open (LOCATION)
+End If
+Set wbk = Workbooks(FILENAME)
+'.xls
+' MsgBox "=HYPERLINK(#" & "'" & SecN & ", " & Left(FirN, 1) & "'" & "!A1" & "," & """" & FirN & " " & SecN & """" & ")"
+
+
+    Set nrow = wbk.Sheets("Name List").ListObjects(1).ListRows.Add
+    With nrow
+        .Range(1) = SecN & ", " & Left(FirN, 1)
+        .Range(2) = "=HYPERLINK(" & """" & "#'" & SecN & ", " & Left(FirN, 1) & "'" & "!A1" & """" & "," & """" & FirN & " " & SecN & """" & ")"
+        End With
+    
+    Dim Lco As Integer
+    Lco = wbk.Sheets("Name List").ListObjects(1).ListRows.Count
+    
+    If U_I = "UK" Then
+
+    With wbk.Sheets("Name List").ListObjects(1).ListRows(Lco)
+        .Range.Cells(1, 1).Interior.ColorIndex = 20
+        .Range.Cells(1, 2).Interior.ColorIndex = 20
+    End With
+    wbk.Sheets("TemplateUK").Visible = True
+    wbk.Sheets("TemplateUK").Copy after:=wbk.Sheets("Name List")
+    ActiveSheet.Name = SecN & ", " & Left(FirN, 1)
+    ActiveSheet.Tab.ColorIndex = 20
+    ActiveSheet.Cells(1, "A") = wbk.Sheets("Name List").Cells(1 + Lco, "B")
+    ActiveSheet.Cells(7, "B") = SDat
+    wbk.Sheets("TemplateUK").Visible = False
+    
+    ElseIf U_I = "India" Then
+    
+    With wbk.Sheets("Name List").ListObjects(1).ListRows(Lco)
+        .Range.Cells(1, 1).Interior.ColorIndex = 19
+        .Range.Cells(1, 2).Interior.ColorIndex = 19
+    End With
+    wbk.Sheets("TemplateIN").Visible = True
+    wbk.Sheets("TemplateIN").Copy after:=wbk.Sheets("Name List")
+    ActiveSheet.Name = SecN & ", " & Left(FirN, 1)
+    ActiveSheet.Tab.ColorIndex = 19
+    ActiveSheet.Cells(1, "A") = wbk.Sheets("Name List").Cells(1 + Lco, "B")
+    ActiveSheet.Cells(7, "B") = SDat
+    wbk.Sheets("TemplateIN").Visible = False
+    End If
+
+'**************************Timesheet End*****************************************
+'Errorcatch:
+'MsgBox Err.Description
+
+End Sub
+
+Sub ASSIGNBUTTON()
+
+'"""""""""""""""""""""""""""""""""""""""""""
+Dim LOCATION As String
+Dim FILENAME As String
+'CHANGE THIS
+LOCATION = Sheets("Data Entry").Cells(1, 1)
+FILENAME = Sheets("Data Entry").Cells(2, 1)
+'""""""""""""""""""""""""""""""""""""""""""
+' errorcatch
+' On Error GoTo Errorcatch
+
+'If Name Empty
+If Cells(4, "B") = "" Then
+    MsgBox ("Please Enter a Name")
+    Exit Sub
+'If Start Date Empty
+End If
+If Cells(4, "C") = "" Then
+    MsgBox ("Please Enter a Start Date")
+    Exit Sub
+End If
+
+' Set Variables
+Dim ReS As Range
+Dim LENGO, NicRow, TotDay, ExDay, Re_Co, Re_TeCo, SMON, EMON, NamRow, Workday As Integer
+Dim DatA, DatB, var_month, var_year As Long
+Dim NAM, SHT, NAMReal, Reason, Re_Te, next_month, CONT  As String
+Dim cela, CelB As Date
+
+Workday = 0
+
+Set cela = Cells(4, "C")
+asdf = cela
+' sets start and end date
+If Len(Cells(4, "D")) > 0 Then
+    CelB = Cells(4, "D")
+Else
+    CelB = cela
+End If
+
+' set reason or default
+Reason = Cells(4, "E")
+If Len(Reason) = 0 Then
+    Reason = "HOLIDAY"
+End If
+
+
+
+' Copy Reason formatting
+For RE = 3 To 14
+    If Reason = Cells(RE, "I") Then
+        If Reason = "CANCELLED" Then
+        Re_Te = ""
+        ElseIf Cells(4, "F") = "" Then
+        Re_Te = 1
+        Else
+        Re_Te = Worksheets("Data Entry").Cells(4, "F")
+        End If
+    Re_Co = Worksheets("Data Entry").Cells(RE, "J").Interior.ColorIndex
+    Re_TeCo = Worksheets("Data Entry").Cells(RE, "J").Font.Color
+    Exit For
+    End If
+Next RE
+
+For x = 40 To 54
+    'MsgBox DateSerial(Year(CelB), Month(CelB), 1) & "    " & DateSerial(Year(Cells(x, "D")), Month(Cells(x, "D")), 1)
+    If DateSerial(Year(Cells(x, "D")), Month(Cells(x, "D")), 1) = DateSerial(Year(cela), Month(cela), 1) Then
+    SMON = x
+    'MsgBox SMON
+    End If
+    If DateSerial(Year(Cells(x, "D")), Month(Cells(x, "D")), 1) = DateSerial(Year(CelB), Month(CelB), 1) Then
+    EMON = x
+    'MsgBox EMON
+    End If
+Next x
+
+
+' TotDay = Days of time off
+TotDay = (CelB) - cela
+' MsgBox (" totday " & TotDay & " CelA " & CelA & " CelB " & CelB)
+
+' End Date Cant be before start date
+If TotDay < 0 Then
+    MsgBox ("Please Enter Concurrent Dates")
+    Exit Sub
+End If
+
+' Needs confirmation for more than 7 days in case of huge f'up
+If TotDay > 7 Then
+    Answer = MsgBox("Number of Days Off Exceeds a Week, Continue anyways?", vbQuestion + vbYesNo, "???")
+    If Answer = vbNo Then
+        'NO - EXIT
+        Exit Sub
+        'YES = Continue
+    End If
+End If
+
+'NAM - reversible name, SHT - Sheet name of start date, LENGO - Length of name list on SHT
+NAM = Cells(4, "B")
+
+
+'NAMReal - reversible name in correct format
+For findP = 41 To ListObjects("NameList").ListRows.Count + 40
+    If Cells(findP, "B") = NAM Then
+    NAMReal = Cells(findP, "C")
+    NamRow = findP
+    If Cells(findP, "B").Interior.ColorIndex = 19 Then
+        CONT = "India"
+    ElseIf Cells(findP, "B").Interior.ColorIndex = 20 Then
+        CONT = "UK"
+    End If
+    Exit For
+    End If
+Next findP
+
+
+
+
+'/////////////////////////////////////////////////
+
+RESPEC:
+
+
+SHT = Worksheets("Data Entry").Cells(SMON, "E")
+
+' find NAMReal on SHT
+LENGO = Worksheets(SHT).ListObjects(1).ListRows.Count
+For x = 3 To (LENGO + 3)
+    If Worksheets(SHT).Cells(x, "A") = NAMReal Then
+    NicRow = x
+    GoTo NameFound
+    End If
+Next x
+
+MsgBox "Name Not found on relavent sheet"
+Exit Sub
+
+NameFound:
+
+' Set Current month, current year, next month
+var_month = Month(Worksheets("Data Entry").Cells(SMON, "D"))
+var_year = Year(Worksheets("Data Entry").Cells(SMON, "D"))
+next_month = Worksheets("Data Entry").Cells(SMON + 1, "D")
+' MsgBox DateSerial(Year(next_month), Month(next_month), Day(next_month)) - DateSerial(Year(CelA), Month(CelA), Day(CelA))
+
+' MsgBox ("var_month " & var_month & " var_year " & var_year & " next_month " & next_month)
+' MsgBox EMON & " " & SMON
+'Extra Days if month overlap
+If EMON - SMON > 0 Then
+
+    ExDay = TotDay - (DateSerial(Year(next_month), Month(next_month), Day(next_month)) - DateSerial(Year(cela), Month(cela), Day(cela))) + 1
+    'MsgBox DateSerial(Year(SHT), Month(SHT), 1)
+    'MsgBox "celb" & CelB & " exday" & ExDay & "  totday" & TotDay
+    'MsgBox ("diff mon " & "ExDay " & ExDay & (" celbdate ") & (DateSerial(var_year, Month(CelB), Day(CelB))))
+    TotDay = TotDay - ExDay
+    'MsgBox TotDay
+
+End If
+
+'MsgBox (Day(next_month - DateSerial(var_year, var_month, Day(DatA))))
+'MsgBox (Day(next_month - DateSerial(var_year, var_month, Day(DatB))))
+
+' for Start Date to days in this month
+
+For Y = Day(cela) To Day(cela) + TotDay
+    If Weekday(DateSerial(var_year, var_month, Y)) = 1 Or Weekday(DateSerial(var_year, var_month, Y)) = 7 Then
+    Else
+        Workday = Workday + 1
+        Worksheets(SHT).Cells(NicRow, Y + 2) = Re_Te
+        Worksheets(SHT).Cells(NicRow, Y + 2).Interior.ColorIndex = Re_Co
+        Worksheets(SHT).Cells(NicRow, Y + 2).Font.Color = Re_TeCo
+    End If
+Next Y
+
+If ExDay > 0 Then
+            TotDay = ExDay - 1
+            SMON = SMON + 1
+            'MsgBox ("exday" & CDbl(ExDay) & " totday" & CDbl(TotDay) & " smon" & )
+            ExDay = 0
+            ' so day(celA) = 1
+            cela = next_month
+            'MsgBox CelA
+            GoTo RESPEC
+End If
+
+' MsgBox Workday
+' Print Error
+'GoTo Fin
+'Errorcatch:
+'MsgBox Err.Description
+'Fin:
+Worksheets(SHT).Activate
+
+
+'***************TIMESHEET*****************
+
+If IsWorkBookOpen(LOCATION) = 0 Then
+Workbooks.Open (LOCATION)
+End If
+Set wbk = Workbooks(FILENAME)
+Set orgbk = Workbooks(ActiveWorkbook.Name)
+' MsgBox ActiveWorkbook.Name
+'.xls
+' HERE IS THE PROBLEM
+' msgbox here
+For x = 1 To wbk.Sheets.Count
+    'MsgBox Cells(NamRow, "A") & " " & wbk.Sheets(x).Name
+    If Cells(NamRow, "A") = wbk.Sheets(x).Name Then
+        If Reason = "CANCELLED" Then
+            wbk.Sheets(x).Activate
+            For LR = 20 To (19 + wbk.Sheets(x).ListObjects(1).ListRows.Count)
+                If wbk.Sheets(x).Cells(LR, "A") = Day(asdf) & "/" & Left(MonthName(Month(asdf)), 3) & "/" & Right(Year(asdf), 2) & " - " & Day(CelB) & "/" & Left(MonthName(Month(CelB)), 3) & "/" & Right(Year(CelB), 2) Or wbk.Sheets(x).Cells(LR, "A") = asdf Then
+                    wbk.Sheets(x).Rows(LR).EntireRow.Delete
+                    wbk.Sheets(x).Calculate
+                    GoTo FIN
+                End If
+            Next LR
+            GoTo FIN
+        End If
+        If CONT = "UK" And (Reason = "HOLIDAY" Or Reason = "SICK" Or Reason = "UNPAID" Or Reason = "AM LEAVE" Or Reason = "PM LEAVE") Then
+        'If first row empty
+            wbk.Sheets(x).Activate
+            If wbk.Sheets(x).Cells(20, "A") = "" Then
+                    If asdf = CelB Then
+                    wbk.Sheets(x).Cells(20, "A") = asdf
+                    Else
+                    wbk.Sheets(x).Cells(20, "A") = Day(asdf) & "/" & Left(MonthName(Month(asdf)), 3) & "/" & Right(Year(asdf), 2) & " - " & Day(CelB) & "/" & Left(MonthName(Month(CelB)), 3) & "/" & Right(Year(CelB), 2)
+                    End If
+                If Reason = "HOLIDAY" Then
+                   wbk.Sheets(x).Cells(20, "B") = Workday * Re_Te
+                ElseIf Reason = "AM LEAVE" Or Reason = "PM LEAVE" Then
+                    wbk.Sheets(x).Cells(20, "B") = Workday * (0.5)
+                ElseIf Reason = "SICK" Then
+                   wbk.Sheets(x).Cells(20, "D") = Workday * Re_Te
+                ElseIf Reason = "UNPAID" Then
+                   wbk.Sheets(x).Cells(20, "E") = Workday * Re_Te
+                End If
+                GoTo FIN
+            End If
+            
+            Set newrow = wbk.Sheets(x).ListObjects(1).ListRows.Add
+            With newrow
+        
+            If asdf = CelB Then
+                .Range(1) = asdf
+            Else
+                .Range(1) = Day(asdf) & "/" & Left(MonthName(Month(asdf)), 3) & "/" & Right(Year(asdf), 2) & " - " & Day(CelB) & "/" & Left(MonthName(Month(CelB)), 3) & "/" & Right(Year(CelB), 2)
+            End If
+            
+            If Reason = "HOLIDAY" Then
+                .Range(2) = Workday * Re_Te
+            ElseIf Reason = "AM LEAVE" Or Reason = "PM LEAVE" Then
+                .Range(2) = Workday * (0.5)
+            ElseIf Reason = "SICK" Then
+                .Range(4) = Workday * Re_Te
+            ElseIf Reason = "UNPAID" Then
+                .Range(5) = Workday * Re_Te
+        End If
+        End With
+        
+        ElseIf CONT = "India" And (Reason = "CASUAL LEAVE" Or Reason = "SICK" Or Reason = "EARNED HOLIDAY" Or Reason = "UNPAID" Or Reason = "EARNED HOLIDAY (SICK)" Or Reason = "CASUAL LEAVE (SICK)" Or Reason = "AM LEAVE" Or Reason = "PM LEAVE") Then
+            wbk.Sheets(x).Activate
+                If wbk.Sheets(x).Cells(20, "A") = "" Then
+                    If asdf = CelB Then
+                    wbk.Sheets(x).Cells(20, "A") = asdf
+                    Else
+                    wbk.Sheets(x).Cells(20, "A") = Day(asdf) & "/" & Left(MonthName(Month(asdf)), 3) & "/" & Right(Year(asdf), 2) & " - " & Day(CelB) & "/" & Left(MonthName(Month(CelB)), 3) & "/" & Right(Year(CelB), 2)
+                    End If
+                    If Reason = "CASUAL LEAVE" Or Reason = "CASUAL LEAVE (SICK)" Then
+                           wbk.Sheets(x).Cells(20, "B") = Workday * Re_Te
+                    ElseIf Reason = "AM LEAVE" Or Reason = "PM LEAVE" Then
+                    wbk.Sheets(x).Cells(20, "B") = Workday * (0.5)
+                    ElseIf Reason = "EARNED HOLIDAY" Or Reason = "EARNED HOLIDAY (SICK)" Then
+                           wbk.Sheets(x).Cells(20, "D") = Workday * Re_Te
+                    ElseIf Reason = "SICK" Then
+                           wbk.Sheets(x).Cells(20, "F") = Workday * Re_Te
+                    ElseIf Reason = "UNPAID" Then
+                           wbk.Sheets(x).Cells(20, "G") = Workday * Re_Te
+                    End If
+                GoTo FIN
+                Sheets("Data Entry").Activate
+                GoTo FIN
+                Else
+            
+                Set newrow = wbk.Sheets(x).ListObjects(1).ListRows.Add
+                With newrow
+                
+                    If asdf = CelB Then
+                        .Range(1) = asdf
+                        Else
+                        .Range(1) = Day(asdf) & "/" & Left(MonthName(Month(asdf)), 3) & "/" & Right(Year(asdf), 2) & " - " & Day(CelB) & "/" & Left(MonthName(Month(CelB)), 3) & "/" & Right(Year(CelB), 2)
+                    End If
+            
+                    If Reason = "CASUAL LEAVE" Or Reason = "CASUAL LEAVE (SICK)" Then
+                    .Range(2) = Workday * Re_Te
+                    ElseIf Reason = "AM LEAVE" Or Reason = "PM LEAVE" Then
+                    .Range(2) = Workday * (0.5)
+                    ElseIf Reason = "EARNED HOLIDAY" Or Reason = "EARNED HOLIDAY (SICK)" Then
+                    .Range(4) = Workday * Re_Te
+                    ElseIf Reason = "SICK" Then
+                    .Range(6) = Workday * Re_Te
+                    ElseIf Reason = "UNPAID" Then
+                    .Range(7) = Workday * Re_Te
+                    End If
+                End With
+                End If
+                End If
+        
+    Exit For
+    End If
+Next x
+
+FIN:
+On Error Resume Next
+orgbk.Activate
+Sheets("Data Entry").Activate
+Cells(4, "C").Select
+'**************TIMESHEET END***************
+
+End Sub
+
+Function IsWorkBookOpen(FILENAME As String)
+    Dim ff As Long, ErrNo As Long
+
+    On Error Resume Next
+    ff = FreeFile()
+    Open FILENAME For Input Lock Read As #ff
+    Close ff
+    ErrNo = Err
+    On Error GoTo 0
+
+    Select Case ErrNo
+    Case 0:    IsWorkBookOpen = False
+    Case 70:   IsWorkBookOpen = True
+    Case Else: Error ErrNo
+    End Select
+End Function
+
+Sub Clear_Text()
+On Error Resume Next
+Range("B4:F4").ClearContents
+Range("B13:F13").ClearContents
+Range("B22:D22").ClearContents
+
+End Sub
+
+
+
+
