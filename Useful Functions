@@ -1,3 +1,83 @@
+Sub FILECHECKER()
+
+Application.ScreenUpdating = False
+
+Range("B2:ZZ" & Rows.Count).Clear
+
+Dim Rango As Range
+Dim allLaptops, PersonTable, ipPage As ListObject
+Set allLaptops = Sheets("MAP").ListObjects("ALL_Laptops")
+Set ipPage = Sheets("User IP and Serial Numbers").ListObjects("Table2")
+
+ipPage.DataBodyRange.Interior.ColorIndex = -4142
+
+dirLoc = "S:\Databases and Electronic Reporting\8. General PS IT\3. Laptop Sign In & Out"
+
+'Create an instance of the FileSystemObject
+Set objFSO = CreateObject("Scripting.FileSystemObject")
+Set objPSN = CreateObject("Scripting.FileSystemObject")
+'Get the folder object
+Set objFolder = objFSO.GetFolder(dirLoc)
+
+Set inDir = CreateObject("Scripting.FileSystemObject")
+
+For Each objSubfolder In objFolder.subfolders
+    
+    ' Create Table (if none exists)
+    ' If Rows(2).Find(objSubFolder.Name) Is Nothing Then
+    
+    Sheets("template").Range("A1:C3").Copy
+    Set Rango = Cells(2, Columns.Count).End(xlToLeft).Offset(0, 1)
+    Rango.PasteSpecial
+    Rango = objSubfolder.Name
+    Rango.Offset(1, 0).ListObject.Name = objSubfolder.Name
+    Set PersonTable = ListObjects(objSubfolder.Name)
+    
+    pPath = dirLoc & "\" & objSubfolder.Name
+    Set psnFolder = objPSN.GetFolder(pPath)
+    For Each psnSubFolder In psnFolder.subfolders
+        Cells(1, 1) = psnSubFolder
+        F = Dir(psnSubFolder & "\*")
+        
+        OUT = 0
+        While F <> ""
+            For x = 2 To allLaptops.ListRows.Count + 1
+                ' MsgBox psnSubFolder.Name & " ///// " & allLaptops.Range(x, 1) & "/////////" & F
+                If InStr(psnSubFolder.Name, allLaptops.Range(x, 1)) > 0 And InStr(LCase(F), "out") > 0 Then
+                lastRow = PersonTable.Range.Columns(1).Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious).Row
+                PersonTable.Range(lastRow - 1, 1) = allLaptops.Range(x, 1)
+                PersonTable.Range(lastRow - 1, 2) = Left(F, 9)
+                OUT = OUT + 1
+                End If
+                If InStr(psnSubFolder.Name, allLaptops.Range(x, 1)) > 0 And InStr(LCase(F), "returned") > 0 Then
+                lastRow = PersonTable.Range.Columns(1).Cells.Find("*", SearchOrder:=xlByRows, SearchDirection:=xlPrevious).Row
+                PersonTable.Range(lastRow - 1, 1) = allLaptops.Range(x, 1)
+                PersonTable.Range(lastRow - 1, 3) = Left(F, 9)
+                OUT = OUT + 1
+                End If
+            Next x
+
+            F = Dir()
+        Wend
+            If OUT = 1 Then
+                Range(PersonTable.Range(lastRow - 1, 1), PersonTable.Range(lastRow - 1, 3)).Interior.ColorIndex = 3
+                Surname = Split(ListObjects(objSubfolder.Name), " ")(1)
+                
+                Set PCell = ipPage.DataBodyRange.Find(Surname)
+                For x = 0 To 7
+                    PCell.Offset(0, x).Interior.ColorIndex = 3
+                Next x
+                
+            End If
+    Next psnSubFolder
+    
+Next objSubfolder
+
+Application.ScreenUpdating = True
+
+
+End Sub
+
 Private Sub Worksheet_Change(ByVal Target As Range)
     Dim KeyCells As Range
 
